@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VINEV Fragrance Indonesia</title>
+<meta name="description" content="10 signature scents handcrafted for the bold, the quiet, and everyone in between.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+
+<!-- ── Supabase CDN ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0C0C0C;--paper:#F7F4EE;--cream:#EDE9DF;--warm:#E8E2D5;
+  --accent:#C8A96E;--accent2:#9B6E3A;--pop:#FF4D2E;
+  --text:#0C0C0C;--text2:#666057;--text3:#999187;
+  --r6:6px;--r12:12px;--r20:20px;--r99:999px;
+  --font-head:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --ease:cubic-bezier(.25,.8,.25,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:var(--font-body);background:var(--paper);color:var(--text);overflow-x:hidden;cursor:none}
+img,svg{display:block}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button{cursor:none}
+
+/* ── CURSOR ── */
+#cursor{position:fixed;width:10px;height:10px;background:var(--ink);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:width .2s var(--ease),height .2s var(--ease);mix-blend-mode:difference}
+#cursor-ring{position:fixed;width:36px;height:36px;border:1.5px solid var(--ink);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:width .25s var(--ease),height .25s var(--ease),opacity .2s;mix-blend-mode:difference;opacity:.5}
+
+/* ── NAVBAR ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;transition:background .3s,border-bottom .3s}
+nav.scrolled{background:rgba(247,244,238,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--warm)}
+.nav-logo{font-family:var(--font-head);font-size:18px;font-weight:800;letter-spacing:-.3px;cursor:none}
+.nav-logo span{color:var(--accent)}
+.nav-links{display:flex;gap:36px;align-items:center}
+.nav-link{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.3px;position:relative;padding:4px 0;transition:color .2s;cursor:none;user-select:none}
+.nav-link::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1.5px;background:var(--ink);transition:width .25s var(--ease)}
+.nav-link:hover,.nav-link.active{color:var(--ink)}
+.nav-link:hover::after,.nav-link.active::after{width:100%}
+.nav-cta{background:var(--ink);color:var(--paper);padding:9px 20px;border-radius:var(--r99);font-size:12px;font-weight:600;letter-spacing:.4px;border:none;transition:background .2s,transform .2s var(--ease-spring);cursor:none}
+.nav-cta:hover{background:var(--accent2);transform:scale(1.04)}
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;padding:4px;cursor:none}
+.hamburger span{width:22px;height:1.5px;background:var(--ink)}
+
+/* ── SPA PAGES ── */
+.page{display:none;opacity:0;transform:translateY(12px);transition:opacity .28s var(--ease),transform .28s var(--ease)}
+.page.active{display:block;opacity:1;transform:none}
+
+/* ── HERO ── */
+#page-home{padding-top:64px}
+.hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.hero-left{padding:80px 60px 60px;display:flex;flex-direction:column;justify-content:center}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--cream);border:1px solid var(--warm);border-radius:var(--r99);padding:5px 14px;font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--accent2);text-transform:uppercase;margin-bottom:28px;width:fit-content}
+.hero-tag::before{content:'●';color:var(--accent);font-size:8px}
+.hero-h1{font-family:var(--font-head);font-size:clamp(52px,6vw,86px);font-weight:800;line-height:.95;letter-spacing:-3px;margin-bottom:20px}
+.hero-h1 em{font-style:italic;color:var(--accent);letter-spacing:-2px}
+.hero-sub{font-size:15px;color:var(--text2);line-height:1.7;max-width:400px;margin-bottom:36px;font-weight:300}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn-solid{background:var(--ink);color:var(--paper);padding:14px 28px;border-radius:var(--r99);font-size:13px;font-weight:600;border:none;transition:all .25s var(--ease-spring);display:inline-flex;align-items:center;gap:8px;cursor:none}
+.btn-solid:hover{background:var(--accent2);transform:scale(1.03) translateY(-2px);box-shadow:0 12px 32px rgba(12,12,12,.2)}
+.btn-outline{background:transparent;color:var(--ink);padding:14px 28px;border-radius:var(--r99);font-size:13px;font-weight:500;border:1.5px solid var(--ink);transition:all .25s var(--ease);display:inline-flex;align-items:center;gap:8px;cursor:none}
+.btn-outline:hover{background:var(--ink);color:var(--paper)}
+.hero-stats{display:flex;gap:36px;margin-top:48px;padding-top:32px;border-top:1px solid var(--warm)}
+.stat-num{font-family:var(--font-head);font-size:28px;font-weight:800}
+.stat-label{font-size:11px;color:var(--text3);letter-spacing:.4px;margin-top:2px}
+.hero-right{background:var(--cream);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.hero-visual{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.hero-bottle{animation:float 4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+.bottle-body{width:96px;height:230px;background:linear-gradient(145deg,#c8a96e 0%,#e8d5b0 40%,#9b6e3a 100%);border-radius:12px 12px 20px 20px;margin:0 auto;position:relative;box-shadow:inset -12px 0 24px rgba(0,0,0,.15),0 24px 60px rgba(155,110,58,.4)}
+.bottle-neck{width:36px;height:42px;background:linear-gradient(145deg,#c8a96e,#9b6e3a);margin:0 auto;border-radius:4px 4px 0 0}
+.bottle-cap-top{width:52px;height:18px;background:var(--ink);margin:0 auto;border-radius:4px 4px 0 0}
+.bottle-label{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);width:72px;height:92px;background:rgba(247,244,238,.92);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px}
+.bottle-label-name{font-family:var(--font-head);font-size:9px;font-weight:800;color:var(--ink);text-align:center;letter-spacing:1px}
+.bottle-label-sub{font-size:7px;color:var(--text3);letter-spacing:.5px}
+.bottle-shine{position:absolute;top:20px;left:18px;width:12px;height:60px;background:linear-gradient(180deg,rgba(255,255,255,.5),transparent);border-radius:6px;transform:rotate(-10deg)}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.35}
+.orb1{width:300px;height:300px;background:var(--accent);top:-60px;right:-60px}
+.orb2{width:220px;height:220px;background:#D4A5A5;bottom:-50px;left:-30px}
+.hero-marquee{position:absolute;bottom:0;left:0;right:0;overflow:hidden;white-space:nowrap;padding:12px 0;background:var(--ink);color:var(--paper)}
+.marquee-track{display:inline-flex;animation:marquee 22s linear infinite}
+.marquee-item{font-family:var(--font-head);font-size:12px;font-weight:600;letter-spacing:2px;padding:0 28px;opacity:.7}
+.marquee-item span{color:var(--accent);margin:0 4px}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── SECTION COMMON ── */
+.section-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--accent2);text-transform:uppercase;margin-bottom:12px}
+.section-h{font-family:var(--font-head);font-size:clamp(32px,4vw,52px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:8px}
+.section-h em{font-style:italic;color:var(--accent)}
+
+/* ── COLLECTION ── */
+#page-collection{padding-top:80px}
+.collection-header{padding:60px 60px 32px;max-width:1280px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap}
+.filter-btn{padding:7px 16px;border-radius:var(--r99);font-size:12px;font-weight:500;border:1.5px solid var(--warm);background:transparent;color:var(--text2);transition:all .2s var(--ease);cursor:none}
+.filter-btn.active,.filter-btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.grid-collection{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;padding:0 60px 80px;max-width:1280px;margin:0 auto}
+.card{background:var(--cream);border-radius:var(--r20);overflow:hidden;transition:transform .3s var(--ease-spring),box-shadow .3s;cursor:none}
+.card:hover{transform:translateY(-6px);box-shadow:0 24px 60px rgba(12,12,12,.12)}
+.card-img{height:220px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.card-bottle-wrap{width:60px;height:100px;transition:transform .4s var(--ease-spring)}
+.card:hover .card-bottle-wrap{transform:scale(1.1) translateY(-4px)}
+.mini-body{width:100%;height:80px;background:linear-gradient(145deg,var(--c1),var(--c2));border-radius:8px 8px 12px 12px;box-shadow:inset -6px 0 12px rgba(0,0,0,.15)}
+.mini-neck{width:38%;height:22px;background:linear-gradient(145deg,var(--c1),var(--c2));margin:0 auto;border-radius:3px 3px 0 0}
+.mini-cap{width:55%;height:10px;background:var(--ink);margin:0 auto;border-radius:3px 3px 0 0}
+.card-bg-text{position:absolute;font-family:var(--font-head);font-size:80px;font-weight:800;color:var(--ink);opacity:.04;letter-spacing:-4px;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;user-select:none}
+.card-body{padding:20px 22px 22px}
+.card-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.6px;padding:3px 10px;border-radius:var(--r99);margin-bottom:10px;background:var(--ink);color:var(--paper);text-transform:uppercase}
+.card-badge.empty{visibility:hidden}
+.card-badge.bestseller{background:#C8A96E;color:var(--paper)}
+.card-badge.new{background:var(--pop);color:#fff}
+.card-badge.trending{background:#7C3AED;color:#fff}
+.card-badge.limited{background:#0C0C0C;color:var(--accent)}
+.card-badge.premium{background:linear-gradient(135deg,#C8A96E,#9B6E3A);color:#fff}
+.card-badge.fanfave{background:#059669;color:#fff}
+.card-name{font-family:var(--font-head);font-size:19px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+.card-tagline{font-size:12px;color:var(--text3);font-style:italic;margin-bottom:12px}
+.card-notes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.note-chip{font-size:10px;padding:3px 9px;background:var(--warm);border-radius:var(--r99);color:var(--text2);font-weight:500}
+.card-footer{display:flex;align-items:center;justify-content:space-between}
+.card-price{font-family:var(--font-head);font-size:18px;font-weight:800}
+.card-price span{font-size:11px;color:var(--text3);font-family:var(--font-body);font-weight:400;margin-left:2px}
+.card-vol{font-size:10px;color:var(--text3);margin-top:2px}
+.card-order-btn{background:var(--ink);color:var(--paper);border:none;border-radius:var(--r99);padding:8px 16px;font-size:12px;font-weight:600;transition:all .2s var(--ease-spring);cursor:none}
+.card-order-btn:hover{background:var(--accent2);transform:scale(1.06)}
+
+/* ── ABOUT ── */
+#page-about{padding-top:80px}
+.about-hero{padding:60px 60px 0;max-width:1280px;margin:0 auto}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;padding:48px 60px 80px;max-width:1280px;margin:0 auto}
+.about-visual{background:var(--cream);border-radius:var(--r20);height:420px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.about-big-letter{font-family:var(--font-head);font-size:260px;font-weight:800;color:var(--ink);opacity:.06;line-height:1;user-select:none}
+.about-badges{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;padding:40px}
+.float-badge{background:var(--paper);border:1px solid var(--warm);border-radius:var(--r12);padding:12px 18px;font-size:12px;font-weight:600;color:var(--text2);margin:6px;transition:transform .3s var(--ease-spring)}
+.float-badge:hover{transform:scale(1.06) rotate(-1deg)}
+.float-badge strong{display:block;font-family:var(--font-head);font-size:20px;font-weight:800;color:var(--ink)}
+.about-text h2{font-family:var(--font-head);font-size:clamp(28px,3.5vw,44px);font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:20px}
+.about-text h2 em{font-style:italic;color:var(--accent)}
+.about-text p{font-size:15px;color:var(--text2);line-height:1.8;font-weight:300;margin-bottom:16px}
+.values-row{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+.value-item{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--cream);border-radius:var(--r12)}
+.value-icon{font-size:20px;width:36px;text-align:center}
+.value-text strong{font-size:13px;font-weight:600;display:block}
+.value-text span{font-size:12px;color:var(--text3)}
+
+/* ── REVIEWS ── */
+#page-reviews{padding-top:80px}
+.reviews-header{padding:60px 60px 32px;max-width:1280px;margin:0 auto}
+.reviews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:0 60px 48px;max-width:1280px;margin:0 auto}
+.review-card{background:var(--cream);border-radius:var(--r20);padding:24px;transition:transform .3s var(--ease-spring)}
+.review-card:hover{transform:translateY(-4px)}
+.review-stars{display:flex;gap:3px;margin-bottom:12px}
+.star-on{color:var(--accent);font-size:14px}
+.star-off{color:var(--warm);font-size:14px}
+.review-text{font-size:14px;color:var(--text2);line-height:1.7;font-style:italic;margin-bottom:16px;font-weight:300}
+.review-author{display:flex;align-items:center;gap:10px}
+.review-avatar{width:34px;height:34px;background:var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;font-weight:800;color:var(--paper);flex-shrink:0}
+.review-name{font-size:13px;font-weight:600}
+.review-product{font-size:11px;color:var(--accent2)}
+.write-review{padding:0 60px 80px;max-width:1280px;margin:0 auto}
+.form-box{background:var(--cream);border-radius:var(--r20);padding:36px;max-width:540px}
+.form-box h3{font-family:var(--font-head);font-size:22px;font-weight:800;letter-spacing:-1px;margin-bottom:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.4px;text-transform:uppercase}
+input,select,textarea{padding:10px 14px;background:var(--paper);border:1.5px solid var(--warm);border-radius:var(--r12);color:var(--ink);outline:none;transition:border-color .2s;font-size:13px;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--ink)}
+input[readonly]{background:var(--warm);color:var(--text2)}
+textarea{resize:vertical;min-height:90px}
+select option{background:var(--paper)}
+
+/* ── CONTACT / ORDER ── */
+#page-contact{padding-top:80px}
+.contact-wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;padding:60px;max-width:1280px;margin:0 auto;align-items:start}
+.contact-info h2{font-family:var(--font-head);font-size:clamp(28px,3.5vw,44px);font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:16px}
+.contact-info h2 em{font-style:italic;color:var(--accent)}
+.contact-info p{font-size:15px;color:var(--text2);line-height:1.8;font-weight:300;margin-bottom:28px}
+.contact-channels{display:flex;flex-direction:column;gap:12px}
+.channel{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--cream);border-radius:var(--r12)}
+.channel-icon{font-size:20px;width:36px;text-align:center}
+.channel-text strong{font-size:13px;font-weight:600;display:block}
+.channel-text span{font-size:12px;color:var(--text3)}
+.btn-submit{width:100%;padding:14px;background:var(--ink);color:var(--paper);border:none;border-radius:var(--r99);font-size:14px;font-weight:600;margin-top:8px;transition:all .25s var(--ease-spring);display:flex;align-items:center;justify-content:center;gap:8px;cursor:none}
+.btn-submit:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 12px 32px rgba(12,12,12,.2)}
+.btn-submit:disabled{opacity:.5;transform:none;pointer-events:none}
+
+/* ── FOOTER ── */
+footer{background:var(--ink);color:var(--paper);padding:48px 60px 32px}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-brand{font-family:var(--font-head);font-size:24px;font-weight:800;letter-spacing:-.3px;margin-bottom:10px}
+.footer-brand span{color:var(--accent)}
+.footer-tagline{font-size:13px;color:rgba(247,244,238,.4);line-height:1.7;font-weight:300}
+.footer-col h4{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(247,244,238,.35);margin-bottom:14px}
+.footer-link{display:block;font-size:13px;color:rgba(247,244,238,.65);margin-bottom:8px;transition:color .2s;font-weight:300;cursor:none}
+.footer-link:hover{color:var(--paper)}
+.footer-bottom{padding-top:24px;border-top:1px solid rgba(247,244,238,.1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.footer-copy{font-size:12px;color:rgba(247,244,238,.28);font-weight:300}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(12,12,12,.75);z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--paper);border-radius:var(--r20);max-width:640px;width:100%;max-height:90vh;overflow-y:auto;position:relative;animation:modalIn .28s var(--ease-spring)}
+@keyframes modalIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.modal-inner{padding:36px}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--warm);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text2);transition:background .2s;cursor:none;z-index:1}
+.modal-close:hover{background:var(--ink);color:var(--paper)}
+.modal-product-name{font-family:var(--font-head);font-size:28px;font-weight:800;letter-spacing:-1.5px;margin-bottom:4px}
+.modal-tagline{font-size:13px;color:var(--text3);font-style:italic;margin-bottom:20px}
+.modal-notes-section{margin-bottom:14px}
+.modal-notes-section h4{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.modal-notes{display:flex;flex-wrap:wrap;gap:6px}
+.modal-note{font-size:11px;padding:4px 10px;border-radius:var(--r99);font-weight:500}
+.mn-top{background:#FEF3C7;color:#92400E}
+.mn-heart{background:#FCE7F3;color:#9D174D}
+.mn-base{background:#E0E7FF;color:#3730A3}
+.modal-desc{font-size:14px;color:var(--text2);line-height:1.8;font-weight:300;margin:16px 0 22px;padding:16px;background:var(--cream);border-radius:var(--r12)}
+.modal-footer-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.modal-price{font-family:var(--font-head);font-size:26px;font-weight:800}
+.modal-vol{font-size:12px;color:var(--text3);font-family:var(--font-body);font-weight:400}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:12px 24px;border-radius:var(--r99);font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:all .3s var(--ease-spring);pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── INIT LOADER ── */
+#init-loader{position:fixed;inset:0;background:var(--ink);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;transition:opacity .5s}
+#init-loader.done{opacity:0;pointer-events:none}
+.loader-logo{font-family:var(--font-head);font-size:32px;font-weight:800;color:var(--paper)}
+.loader-logo span{color:var(--accent)}
+.loader-bar{width:120px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.loader-progress{height:100%;background:var(--accent);border-radius:2px;animation:ldprog .9s var(--ease) forwards}
+@keyframes ldprog{from{width:0}to{width:100%}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .hero,.about-grid,.contact-wrap,.footer-grid{grid-template-columns:1fr;gap:32px}
+  .hero-right{min-height:380px}
+  .collection-header,.grid-collection,.reviews-grid,.write-review,.contact-wrap,.about-grid,.about-hero{padding-left:24px;padding-right:24px}
+  .hero-left{padding:80px 24px 40px}
+  .nav-links{display:none;position:fixed;top:64px;left:0;right:0;background:rgba(247,244,238,.97);flex-direction:column;padding:24px;gap:0;border-bottom:1px solid var(--warm);backdrop-filter:blur(20px)}
+  .nav-links.open{display:flex}
+  .nav-link{padding:14px 0;border-bottom:1px solid var(--warm);width:100%}
+  .nav-link:last-child{border:none}
+  .hamburger{display:flex}
+  nav{padding:0 24px}
+  footer{padding:40px 24px 24px}
+}
+@media(max-width:480px){
+  .hero-h1{letter-spacing:-2px}
+  .hero-stats{gap:20px}
+  .form-row{grid-template-columns:1fr}
+  .modal-footer-row{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<!-- Init Loader -->
+<div id="init-loader">
+  <div class="loader-logo">VINEV<span>.</span></div>
+  <div class="loader-bar"><div class="loader-progress"></div></div>
+</div>
+
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Product Detail Modal -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-inner" id="modalContent"></div>
+  </div>
+</div>
+
+<!-- Quick Order Modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeOrderModal()">✕</button>
+    <div class="modal-inner" id="orderModalContent"></div>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="nav-logo" onclick="goPage('home')">VINEV by Dik Fragrance<span>.</span></div>
+  <div class="nav-links" id="navLinks">
+    <a class="nav-link active" onclick="goPage('home')" data-page="home">Home</a>
+    <a class="nav-link" onclick="goPage('collection')" data-page="collection">Collection</a>
+    <a class="nav-link" onclick="goPage('about')" data-page="about">About</a>
+    <a class="nav-link" onclick="goPage('reviews')" data-page="reviews">Reviews</a>
+    <a class="nav-link" onclick="goPage('contact')" data-page="contact">Order</a>
+  </div>
+  <button class="nav-cta" onclick="goPage('contact')">Shop Now ↗</button>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ── PAGE: HOME ── -->
+<div id="page-home" class="page active">
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-tag">Artisan Fragrance · Est. 2024</div>
+      <h1 class="hero-h1">Wear Your<br><em>Mood</em><br>Loud.</h1>
+      <p class="hero-sub">10 signature VINEV handcrafted for the bold, the quiet, and everyone in between. No rules, just you.</p>
+      <div class="hero-btns">
+        <button class="btn-solid" onclick="goPage('collection')">Explore Collection →</button>
+        <button class="btn-outline" onclick="goPage('about')">Our Story</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-num" id="stat-products">10</div><div class="stat-label">Signature Vinev</div></div>
+        <div><div class="stat-num" id="stat-reviews">5+</div><div class="stat-label">Happy Reviews</div></div>
+        <div><div class="stat-num">100%</div><div class="stat-label">Original Formula</div></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="orb orb1"></div>
+      <div class="orb orb2"></div>
+      <div class="hero-visual">
+        <div class="hero-bottle">
+          <div class="bottle-cap-top"></div>
+          <div class="bottle-neck"></div>
+          <div class="bottle-body">
+            <div class="bottle-shine"></div>
+            <div class="bottle-label">
+              <div class="bottle-label-name">OBSIDIAN</div>
+              <div class="bottle-label-sub">EAU DE PARFUM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-marquee">
+        <div class="marquee-track" id="marquee-track"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ── PAGE: COLLECTION ── -->
+<div id="page-collection" class="page">
+  <div class="collection-header">
+    <div>
+      <div class="section-tag">Our Vinev</div>
+      <h2 class="section-h">The <em>Collection</em></h2>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterProducts('all',this)">All</button>
+      <button class="filter-btn" onclick="filterProducts('Unisex',this)">Unisex</button>
+      <button class="filter-btn" onclick="filterProducts('Feminin',this)">Feminin</button>
+      <button class="filter-btn" onclick="filterProducts('Maskulin',this)">Maskulin</button>
+    </div>
+  </div>
+  <div class="grid-collection" id="productGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text3)">Memuat koleksi…</div>
+  </div>
+</div>
+
+<!-- ── PAGE: ABOUT ── -->
+<div id="page-about" class="page">
+  <div class="about-hero">
+    <div class="section-tag">Who We Are</div>
+    <h2 class="section-h">Vinev is a <em>language</em>.<br>We help you speak it.</h2>
+  </div>
+  <div class="about-grid">
+    <div class="about-visual">
+      <div class="about-big-letter">V</div>
+      <div class="about-badges">
+        <div class="float-badge"><strong>10</strong>Signature Vinev</div>
+        <div class="float-badge"><strong>100%</strong>Original</div>
+        <div class="float-badge"><strong>Lokal</strong>Pride</div>
+        <div class="float-badge"><strong>Est.</strong>2024</div>
+        <div class="float-badge"><strong>No</strong>Compromise</div>
+      </div>
+    </div>
+    <div class="about-text">
+      <h2>Born from<br><em>obsession</em>,<br>not obligation.</h2>
+      <p>VINEV Fragrance Indonesia lahir dari satu keyakinan — wewangian bukan sekadar aksesori, ia adalah bahasa yang paling jujur. Kami bukan brand besar dengan iklan mahal, kami adalah sekelompok orang yang sangat obsesif dengan aroma.</p>
+      <p>Setiap botol dibuat dengan bahan-bahan pilihan, terinspirasi dari momen nyata — pagi hari yang tenang, malam yang intens, pantai di dalam pikiran, dan hutan dalam mimpi.</p>
+      <div class="values-row">
+        <div class="value-item"><div class="value-icon">🌿</div><div class="value-text"><strong>Formula yang Premium</strong><span>Fragrance Grade A+</span></div></div>
+        <div class="value-item"><div class="value-icon">🧪</div><div class="value-text"><strong>Formula Original</strong><span>Pengembangan formula yang sudah disesuaikan</span></div></div>
+        <div class="value-item"><div class="value-icon">📦</div><div class="value-text"><strong>Packaging Estetik</strong><span>Layak banget buat di-unboxing</span></div></div>
+        <div class="value-item"><div class="value-icon">💬</div><div class="value-text"><strong>CS yang Friendly</strong><span>Respon cepat, no ghosting</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE: REVIEWS ── -->
+<div id="page-reviews" class="page">
+  <div class="reviews-header">
+    <div class="section-tag">Real Talk</div>
+    <h2 class="section-h">What they <em>say</em></h2>
+  </div>
+  <div class="reviews-grid" id="reviewsGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text3)">Memuat ulasan…</div>
+  </div>
+  <div class="write-review">
+    <div class="form-box">
+      <h3>Drop your <em style="font-style:italic;color:var(--accent)">review</em> ✍</h3>
+      <div class="form-row">
+        <div class="form-field"><label>Nama</label><input id="rv-nama" placeholder="e.g. Siti R."></div>
+        <div class="form-field"><label>Produk</label><select id="rv-produk"><option value="">Pilih parfum…</option></select></div>
+      </div>
+      <div class="form-field">
+        <label>Rating</label>
+        <select id="rv-rating">
+          <option value="5">★★★★★ — Luar biasa!</option>
+          <option value="4">★★★★☆ — Bagus banget</option>
+          <option value="3">★★★☆☆ — Lumayan</option>
+          <option value="2">★★☆☆☆ — Kurang</option>
+          <option value="1">★☆☆☆☆ — Tidak suka</option>
+        </select>
+      </div>
+      <div class="form-field"><label>Komentar</label><textarea id="rv-komentar" placeholder="Ceritain pengalaman kamu…"></textarea></div>
+      <button class="btn-submit" onclick="submitReview()"><span>Kirim Review</span> <span>✉</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE: CONTACT/ORDER ── -->
+<div id="page-contact" class="page">
+  <div class="contact-wrap">
+    <div class="contact-info">
+      <div class="section-tag">Get Yours</div>
+      <h2><em>Order</em> sekarang,<br>wangi besok.</h2>
+      <p>Isi form di samping atau langsung hubungi kami. Pengiriman ke seluruh Indonesia, proses cepat, packaging aman.</p>
+      <div class="contact-channels">
+        <div class="channel"><div class="channel-icon">📱</div><div class="channel-text"><strong>WhatsApp</strong><span>+62 812-xxxx-xxxx · Fast Response</span></div></div>
+        <div class="channel"><div class="channel-icon">📸</div><div class="channel-text"><strong>Instagram</strong><span>@VINEV.FragranceIndonesia</span></div></div>
+        <div class="channel"><div class="channel-icon">📦</div><div class="channel-text"><strong>Shopee / Tokopedia</strong><span>VINEV Fragrance Official Store</span></div></div>
+        <div class="channel"><div class="channel-icon">⏱</div><div class="channel-text"><strong>Proses Order</strong><span>1–2 hari kerja</span></div></div>
+      </div>
+    </div>
+    <div class="form-box">
+      <h3>Form <em style="font-style:italic;color:var(--accent)">Pesanan</em></h3>
+      <div class="form-field"><label>Nama Lengkap *</label><input id="ord-nama" placeholder="Nama kamu"></div>
+      <div class="form-field"><label>Nomor WhatsApp *</label><input id="ord-wa" placeholder="08xx-xxxx-xxxx" type="tel"></div>
+      <div class="form-field"><label>Pilih Parfum *</label><select id="ord-produk" onchange="calcTotal()"><option value="">Pilih parfum…</option></select></div>
+      <div class="form-row">
+        <div class="form-field"><label>Qty</label><input id="ord-qty" type="number" value="1" min="1" max="20" oninput="calcTotal()"></div>
+        <div class="form-field"><label>Total</label><input id="ord-total" readonly placeholder="Rp 0"></div>
+      </div>
+      <div class="form-field"><label>Catatan (opsional)</label><textarea id="ord-catatan" placeholder="Alamat, catatan khusus, dll…" rows="3"></textarea></div>
+      <button class="btn-submit" id="submitOrderBtn" onclick="submitOrder()"><span>Kirim Pesanan</span><span>→</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-brand">VINEV Fragrance Indonesia<span>.</span></div>
+      <div class="footer-tagline">Wewangian artisan untuk<br>generasi yang nggak mau biasa-biasa aja.</div>
+    </div>
+    <div>
+      <h4>Navigasi</h4>
+      <a class="footer-link" onclick="goPage('home')">Home</a>
+      <a class="footer-link" onclick="goPage('collection')">Collection</a>
+      <a class="footer-link" onclick="goPage('about')">About</a>
+      <a class="footer-link" onclick="goPage('reviews')">Reviews</a>
+    </div>
+    <div>
+      <h4>Kontak</h4>
+      <a class="footer-link">WhatsApp</a>
+      <a class="footer-link">Instagram @VINEV.FragranceIndonesia</a>
+      <a class="footer-link">Shopee Store</a>
+      <a class="footer-link">Tokopedia Store</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 VINEV Fragrance Indonesia. All rights reserved.</div>
+    <div class="footer-copy">Made with ♥ in Indonesia</div>
+  </div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG — ganti dengan kredensial Supabase kamu
+// ══════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://bseuiwkwqacflrzwjwwl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzZXVpd2t3cWFjZmxyendqd3dsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzA2NjIsImV4cCI6MjA4OTQ0NjY2Mn0.0-CxEELEekVPR6hrY6QbpAjpzj5w2_Y2NfJMGehfwYc';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ══════════════════════════════════════════════════════
+//  CACHE — load sekali, navigasi instan
+// ══════════════════════════════════════════════════════
+const CACHE = { products: [], reviews: [], loaded: false };
+
+const BOTTLE_COLORS = [
+  ['#1A1A2E','#16213E'],['#C8A96E','#9B6E3A'],['#4A90D9','#2C5F8A'],
+  ['#D4A5A5','#B07070'],['#6B8F71','#3D5940'],['#F4C874','#D4953A'],
+  ['#2C2C54','#1A1A35'],['#E8B4B8','#C47A7E'],['#FF6B6B','#C0392B'],
+  ['#9B59B6','#6C3483']
+];
+
+// ══════════════════════════════════════════════════════
+//  SPA NAVIGATION
+// ══════════════════════════════════════════════════════
+let currentPage = 'home';
+
+function goPage(page) {
+  if (page === currentPage) return;
+  const cur = document.getElementById('page-' + currentPage);
+  if (cur) { cur.style.opacity = '0'; cur.style.transform = 'translateY(12px)'; }
+  setTimeout(() => {
+    if (cur) cur.classList.remove('active');
+    const nxt = document.getElementById('page-' + page);
+    if (!nxt) return;
+    nxt.classList.add('active');
+    requestAnimationFrame(() => { nxt.style.opacity = '1'; nxt.style.transform = 'none'; });
+    currentPage = page;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === page));
+    document.getElementById('navLinks').classList.remove('open');
+    if (page === 'collection' && CACHE.loaded) renderCollection();
+    if (page === 'reviews'    && CACHE.loaded) renderReviews();
+    if (page === 'contact'    && CACHE.loaded) populateOrderSelect();
+  }, 200);
+}
+
+// ══════════════════════════════════════════════════════
+//  CURSOR
+// ══════════════════════════════════════════════════════
+const curEl = document.getElementById('cursor');
+const ringEl = document.getElementById('cursor-ring');
+let rx = 0, ry = 0, mx = 0, my = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  curEl.style.left = mx + 'px'; curEl.style.top = my + 'px';
+});
+(function animRing() {
+  rx += (mx - rx) * .15; ry += (my - ry) * .15;
+  ringEl.style.left = rx + 'px'; ringEl.style.top = ry + 'px';
+  requestAnimationFrame(animRing);
+})();
+document.addEventListener('mouseover', e => {
+  if (e.target.closest('button,a,[onclick]')) {
+    curEl.style.width = '18px'; curEl.style.height = '18px';
+    ringEl.style.width = '52px'; ringEl.style.height = '52px';
+  } else {
+    curEl.style.width = '10px'; curEl.style.height = '10px';
+    ringEl.style.width = '36px'; ringEl.style.height = '36px';
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', scrollY > 40);
+});
+function toggleMenu() { document.getElementById('navLinks').classList.toggle('open'); }
+
+function toast(msg, dur = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(n || 0);
+
+function badgeClass(b) {
+  const m = { 'Best Seller':'bestseller','Bestseller':'bestseller','New':'new',
+              'Trending':'trending','Limited':'limited','Premium':'premium','Fan Fave':'fanfave' };
+  return m[b] || '';
+}
+
+function buildBottle(idx) {
+  const [c1, c2] = BOTTLE_COLORS[idx % BOTTLE_COLORS.length];
+  return `<div class="card-bottle-wrap">
+    <div class="mini-cap"></div>
+    <div class="mini-neck" style="--c1:${c1};--c2:${c2}"></div>
+    <div class="mini-body" style="--c1:${c1};--c2:${c2}"></div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER COLLECTION
+// ══════════════════════════════════════════════════════
+let activeFilter = 'all';
+
+function renderCollection(filter) {
+  if (filter !== undefined) activeFilter = filter;
+  const grid = document.getElementById('productGrid');
+  const list = activeFilter === 'all'
+    ? CACHE.products
+    : CACHE.products.filter(p => p.kategori === activeFilter);
+
+  if (!list.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">Tidak ada produk.</div>';
+    return;
+  }
+  grid.innerHTML = list.map((p, i) => {
+    const bc = badgeClass(p.badge || '');
+    const notes = (p.top_notes || '').split(',').slice(0, 2)
+      .map(n => `<span class="note-chip">${n.trim()}</span>`).join('');
+    return `<div class="card" style="animation:fadeUp .4s var(--ease) ${i * .05}s both" onclick="openProduct('${p.id}')">
+      <div class="card-img">
+        <div class="card-bg-text">${p.nama}</div>
+        ${buildBottle(i)}
+      </div>
+      <div class="card-body">
+        <div class="card-badge ${bc || 'empty'}">${p.badge || '·'}</div>
+        <div class="card-name">${p.nama}</div>
+        <div class="card-tagline">${p.tagline || ''}</div>
+        <div class="card-notes">${notes}</div>
+        <div class="card-footer">
+          <div>
+            <div class="card-price">${fmt(p.harga)}<span>/ btl</span></div>
+            <div class="card-vol">${p.volume_ml}ml · ${p.kategori}</div>
+          </div>
+          <button class="card-order-btn" onclick="event.stopPropagation();quickOrder('${p.id}')">Order →</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterProducts(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCollection(cat);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER REVIEWS
+// ══════════════════════════════════════════════════════
+function renderReviews() {
+  const grid = document.getElementById('reviewsGrid');
+  if (!CACHE.reviews.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">Belum ada ulasan.</div>';
+  } else {
+    grid.innerHTML = CACHE.reviews.map(r => {
+      const on  = '★'.repeat(r.rating || 5);
+      const off = '☆'.repeat(5 - (r.rating || 5));
+      const ini = (r.nama || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      return `<div class="review-card">
+        <div class="review-stars">
+          ${on.split('').map(s => `<span class="star-on">${s}</span>`).join('')}
+          ${off.split('').map(s => `<span class="star-off">${s}</span>`).join('')}
+        </div>
+        <div class="review-text">"${r.komentar || ''}"</div>
+        <div class="review-author">
+          <div class="review-avatar">${ini}</div>
+          <div><div class="review-name">${r.nama}</div><div class="review-product">${r.produk_nama || ''}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  // populate select
+  const sel = document.getElementById('rv-produk');
+  sel.innerHTML = '<option value="">Pilih parfum…</option>' +
+    CACHE.products.map(p => `<option value="${p.nama}">${p.nama}</option>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  ORDER SELECT & CALC
+// ══════════════════════════════════════════════════════
+function populateOrderSelect() {
+  const sel = document.getElementById('ord-produk');
+  sel.innerHTML = '<option value="">Pilih parfum…</option>' +
+    CACHE.products.map(p =>
+      `<option value="${p.id}" data-harga="${p.harga}" data-nama="${p.nama}">${p.nama} — ${fmt(p.harga)}</option>`
+    ).join('');
+}
+
+function calcTotal() {
+  const sel = document.getElementById('ord-produk');
+  const opt = sel.options[sel.selectedIndex];
+  const h   = parseInt(opt?.dataset.harga) || 0;
+  const q   = parseInt(document.getElementById('ord-qty').value) || 1;
+  document.getElementById('ord-total').value = h ? fmt(h * q) : 'Rp 0';
+}
+
+// ══════════════════════════════════════════════════════
+//  PRODUCT DETAIL MODAL
+// ══════════════════════════════════════════════════════
+function openProduct(id) {
+  const p = CACHE.products.find(x => x.id === id);
+  if (!p) return;
+  const idx  = CACHE.products.indexOf(p);
+  const [c1, c2] = BOTTLE_COLORS[idx % BOTTLE_COLORS.length];
+  const mkNotes = (str, cls) => (str || '').split(',')
+    .map(n => `<span class="modal-note ${cls}">${n.trim()}</span>`).join('');
+
+  document.getElementById('modalContent').innerHTML = `
+    <div style="display:flex;gap:24px;margin-bottom:22px;align-items:center">
+      <div style="width:76px;height:136px;background:linear-gradient(145deg,${c1},${c2});border-radius:8px 8px 12px 12px;flex-shrink:0;box-shadow:0 12px 32px rgba(0,0,0,.15)"></div>
+      <div>
+        <div class="modal-product-name">${p.nama}</div>
+        <div class="modal-tagline">${p.tagline || ''}</div>
+        <div>${'★'.repeat(Math.round(p.rating || 5)).split('').map(s=>`<span class="star-on">${s}</span>`).join('')}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">${p.kategori} · ${p.volume_ml}ml · Stok: ${p.stok}</div>
+      </div>
+    </div>
+    <div class="modal-notes-section"><h4>🌿 Top Notes</h4><div class="modal-notes">${mkNotes(p.top_notes,'mn-top')}</div></div>
+    <div class="modal-notes-section" style="margin-top:10px"><h4>💐 Heart Notes</h4><div class="modal-notes">${mkNotes(p.heart_notes,'mn-heart')}</div></div>
+    <div class="modal-notes-section" style="margin-top:10px"><h4>🪨 Base Notes</h4><div class="modal-notes">${mkNotes(p.base_notes,'mn-base')}</div></div>
+    <div class="modal-desc">${p.deskripsi || ''}</div>
+    <div class="modal-footer-row">
+      <div><div class="modal-price">${fmt(p.harga)}<span class="modal-vol"> / ${p.volume_ml}ml</span></div></div>
+      <button class="btn-solid" onclick="closeModal();quickOrder('${p.id}')">Order Sekarang →</button>
+    </div>`;
+  document.getElementById('productModal').classList.add('show');
+}
+function closeModal() { document.getElementById('productModal').classList.remove('show'); }
+
+// ══════════════════════════════════════════════════════
+//  QUICK ORDER MODAL
+// ══════════════════════════════════════════════════════
+function quickOrder(id) {
+  const p = CACHE.products.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('orderModalContent').innerHTML = `
+    <div class="modal-product-name" style="font-size:22px">Order: ${p.nama}</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:20px">${fmt(p.harga)} / botol</div>
+    <div class="form-field"><label>Nama Lengkap *</label><input id="qo-nama" placeholder="Nama kamu"></div>
+    <div class="form-field"><label>Nomor WhatsApp *</label><input id="qo-wa" placeholder="08xx-xxxx-xxxx" type="tel"></div>
+    <div class="form-row">
+      <div class="form-field"><label>Qty</label><input id="qo-qty" type="number" value="1" min="1" max="20" oninput="document.getElementById('qo-total').value=fmt(${p.harga}*+(this.value||1))"></div>
+      <div class="form-field"><label>Total</label><input id="qo-total" readonly value="${fmt(p.harga)}"></div>
+    </div>
+    <div class="form-field"><label>Catatan</label><textarea id="qo-catatan" placeholder="Alamat, dll…" rows="2"></textarea></div>
+    <button class="btn-submit" id="qo-submit" onclick="submitQuickOrder('${p.id}','${p.nama.replace(/'/g,"\\'")}',${p.harga})">
+      <span>Kirim Pesanan</span><span>→</span>
+    </button>`;
+  document.getElementById('orderModal').classList.add('show');
+}
+function closeOrderModal() { document.getElementById('orderModal').classList.remove('show'); }
+
+// ══════════════════════════════════════════════════════
+//  SUBMIT — ORDER (Quick)
+// ══════════════════════════════════════════════════════
+async function submitQuickOrder(produkId, produkNama, harga) {
+  const nama    = document.getElementById('qo-nama').value.trim();
+  const wa      = document.getElementById('qo-wa').value.trim();
+  const qty     = parseInt(document.getElementById('qo-qty').value) || 1;
+  const catatan = document.getElementById('qo-catatan').value.trim();
+  if (!nama || !wa) { toast('⚠ Nama & WhatsApp wajib diisi'); return; }
+
+  const btn = document.getElementById('qo-submit');
+  btn.disabled = true; btn.children[0].textContent = 'Mengirim…';
+
+  const code = 'ORD-' + Date.now().toString(36).toUpperCase();
+  const { error } = await sb.from('orders').insert({
+    order_code: code, nama_pembeli: nama, whatsapp: wa,
+    produk_id: produkId, produk_nama: produkNama,
+    qty, total: harga * qty, catatan, status: 'pending'
+  });
+
+  btn.disabled = false; btn.children[0].textContent = 'Kirim Pesanan';
+  if (error) { toast('❌ Gagal: ' + error.message); return; }
+  closeOrderModal();
+  toast(`✅ Pesanan ${code} berhasil! Kami akan hubungi via WA.`, 4000);
+}
+
+// ══════════════════════════════════════════════════════
+//  SUBMIT — ORDER (Form halaman Contact)
+// ══════════════════════════════════════════════════════
+async function submitOrder() {
+  const nama    = document.getElementById('ord-nama').value.trim();
+  const wa      = document.getElementById('ord-wa').value.trim();
+  const sel     = document.getElementById('ord-produk');
+  const opt     = sel.options[sel.selectedIndex];
+  const produkId   = sel.value;
+  const produkNama = opt?.dataset.nama || '';
+  const harga      = parseInt(opt?.dataset.harga) || 0;
+  const qty        = parseInt(document.getElementById('ord-qty').value) || 1;
+  const catatan    = document.getElementById('ord-catatan').value.trim();
+  if (!nama || !wa || !produkId) { toast('⚠ Lengkapi semua field yang wajib diisi'); return; }
+
+  const btn = document.getElementById('submitOrderBtn');
+  btn.disabled = true; btn.children[0].textContent = 'Mengirim…';
+
+  const code = 'ORD-' + Date.now().toString(36).toUpperCase();
+  const { error } = await sb.from('orders').insert({
+    order_code: code, nama_pembeli: nama, whatsapp: wa,
+    produk_id: produkId, produk_nama: produkNama,
+    qty, total: harga * qty, catatan, status: 'pending'
+  });
+
+  btn.disabled = false; btn.children[0].textContent = 'Kirim Pesanan';
+  if (error) { toast('❌ Gagal: ' + error.message); return; }
+  toast(`✅ Pesanan ${code} diterima! Kami segera hubungi via WA.`, 4000);
+  document.getElementById('ord-nama').value = '';
+  document.getElementById('ord-wa').value = '';
+  sel.value = ''; document.getElementById('ord-qty').value = '1';
+  document.getElementById('ord-total').value = '';
+}
+
+// ══════════════════════════════════════════════════════
+//  SUBMIT — REVIEW
+// ══════════════════════════════════════════════════════
+async function submitReview() {
+  const nama     = document.getElementById('rv-nama').value.trim();
+  const produk   = document.getElementById('rv-produk').value;
+  const rating   = parseInt(document.getElementById('rv-rating').value);
+  const komentar = document.getElementById('rv-komentar').value.trim();
+  if (!nama || !produk || !komentar) { toast('⚠ Lengkapi semua field'); return; }
+
+  const { error } = await sb.from('reviews').insert({
+    nama, produk_nama: produk, rating, komentar, tampilkan: false
+  });
+  if (error) { toast('❌ Gagal: ' + error.message); return; }
+  toast('✅ Review terkirim! Akan ditampilkan setelah diverifikasi.', 4000);
+  document.getElementById('rv-nama').value = '';
+  document.getElementById('rv-produk').value = '';
+  document.getElementById('rv-komentar').value = '';
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL — close on overlay / ESC
+// ══════════════════════════════════════════════════════
+document.getElementById('productModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.getElementById('orderModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeOrderModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeOrderModal(); } });
+
+// ══════════════════════════════════════════════════════
+//  INIT — load semua data SEKALI
+// ══════════════════════════════════════════════════════
+async function init() {
+  const [{ data: products }, { data: reviews }] = await Promise.all([
+    sb.from('products').select('*').order('id'),
+    sb.from('reviews').select('*').eq('tampilkan', true).order('created_at', { ascending: false })
+  ]);
+
+  CACHE.products = products || [];
+  CACHE.reviews  = reviews  || [];
+  CACHE.loaded   = true;
+
+  // Hero stats
+  document.getElementById('stat-products').textContent = CACHE.products.length || 10;
+  document.getElementById('stat-reviews').textContent  = (CACHE.reviews.length || 5) + '+';
+
+  // Marquee
+  const names = CACHE.products.map(p => p.nama);
+  const items = [...names, ...names].map(n => `<span class="marquee-item">${n} <span>·</span></span>`).join('');
+  document.getElementById('marquee-track').innerHTML = items + items;
+
+  // Pre-render jika langsung buka halaman lain
+  if (currentPage === 'collection') renderCollection();
+  if (currentPage === 'reviews')    renderReviews();
+  if (currentPage === 'contact')    populateOrderSelect();
+
+  // Sembunyikan loader
+  setTimeout(() => document.getElementById('init-loader').classList.add('done'), 800);
+}
+
+init();
+</script>
+</body>
+</html>

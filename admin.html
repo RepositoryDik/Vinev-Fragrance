@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — VINEV Fragrance</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F0F0F;--bg2:#181818;--bg3:#222;--bg4:#2A2A2A;
+  --border:#2E2E2E;--border2:#3A3A3A;
+  --text:#F0EDE8;--text2:#9A9590;--text3:#5A5550;
+  --accent:#C8A96E;--accent2:#9B6E3A;
+  --green:#3FB950;--red:#F85149;--orange:#E3B341;--blue:#58A6FF;
+  --r8:8px;--r12:12px;--r16:16px;--r99:999px;
+  --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+  --ease:cubic-bezier(.25,.8,.25,1);
+}
+html{font-size:14px}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh}
+button{cursor:pointer;font-family:inherit;font-size:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+#login-screen.hidden{display:none}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r16);padding:40px;width:100%;max-width:380px}
+.login-logo{font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.login-logo span{color:var(--accent)}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:28px}
+.login-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.login-field label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
+.login-field input{padding:10px 12px;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r8);color:var(--text);outline:none;transition:border-color .2s}
+.login-field input:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:12px;background:var(--accent);color:#0F0F0F;border:none;border-radius:var(--r8);font-size:13px;font-weight:700;margin-top:6px;transition:background .2s}
+.login-btn:hover{background:var(--accent2);color:var(--text)}
+.login-err{font-size:12px;color:var(--red);margin-top:8px;text-align:center;min-height:18px}
+
+/* ── APP LAYOUT ── */
+#app{display:flex;height:100vh;overflow:hidden}
+#app.hidden{display:none}
+.sidebar{width:210px;min-width:210px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-logo{padding:20px 16px 14px;border-bottom:1px solid var(--border)}
+.sidebar-logo .brand{font-family:var(--font-head);font-size:16px;font-weight:800}
+.sidebar-logo .brand span{color:var(--accent)}
+.sidebar-logo .sub{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:.3px}
+.nav-section{padding:10px 8px 4px}
+.nav-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;padding:0 8px;text-transform:uppercase;margin-bottom:3px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r8);cursor:pointer;color:var(--text2);font-size:12px;font-weight:500;transition:all .15s;margin:1px 0;user-select:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(200,169,110,.12);color:var(--accent);font-weight:600}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:12px 8px;border-top:1px solid var(--border)}
+.logout-btn{width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);color:var(--text2);font-size:11px;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.logout-btn:hover{background:rgba(248,81,73,.1);color:var(--red);border-color:rgba(248,81,73,.3)}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;min-height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px}
+.topbar-title{font-size:14px;font-weight:700}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.page-body{flex:1;overflow-y:auto;padding:20px}
+
+/* ── TABS ── */
+.admin-page{display:none}
+.admin-page.active{display:block}
+
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);padding:14px 16px}
+.kpi-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi-val{font-family:var(--font-head);font-size:22px;font-weight:800}
+.kpi-val.green{color:var(--green)}
+.kpi-val.red{color:var(--red)}
+.kpi-val.accent{color:var(--accent)}
+.kpi-val.blue{color:var(--blue)}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);overflow:hidden}
+.table-toolbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.table-toolbar h3{font-size:13px;font-weight:700}
+.search-inp{padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);color:var(--text);outline:none;font-size:12px;width:200px;transition:border-color .2s}
+.search-inp:focus{border-color:var(--accent)}
+.ml-auto{margin-left:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--bg3)}
+th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 12px;color:var(--text);border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--bg3)}
+.actions{display:flex;gap:6px;justify-content:flex-end}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--r8);font-size:11px;font-weight:600;border:none;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#0F0F0F}
+.btn-primary:hover{background:var(--accent2);color:var(--text)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-danger{background:rgba(248,81,73,.12);color:var(--red);border:1px solid rgba(248,81,73,.25)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-success{background:rgba(63,185,80,.12);color:var(--green);border:1px solid rgba(63,185,80,.25)}
+.btn-success:hover{background:var(--green);color:#0F0F0F}
+.btn-sm{padding:4px 9px;font-size:10px}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--r99);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.badge-green{background:rgba(63,185,80,.12);color:var(--green)}
+.badge-red{background:rgba(248,81,73,.12);color:var(--red)}
+.badge-orange{background:rgba(227,179,65,.12);color:var(--orange)}
+.badge-blue{background:rgba(88,166,255,.12);color:var(--blue)}
+.badge-accent{background:rgba(200,169,110,.12);color:var(--accent)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r16);width:100%;max-width:500px;max-height:90vh;display:flex;flex-direction:column;animation:mIn .2s var(--ease)}
+@keyframes mIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-header h3{font-size:14px;font-weight:700}
+.modal-close{background:none;border:none;color:var(--text3);font-size:16px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:var(--r8);transition:background .15s}
+.modal-close:hover{background:var(--bg3);color:var(--text)}
+.modal-body{padding:16px 18px;overflow-y:auto;flex:1}
+.modal-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{padding:8px 10px;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r8);color:var(--text);outline:none;transition:border-color .2s;font-size:12px}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent)}
+.form-group select option{background:var(--bg3)}
+.form-group textarea{resize:vertical;min-height:70px}
+
+/* ── CONFIRM MODAL ── */
+#confirmModal .modal{max-width:360px}
+.confirm-text{font-size:13px;color:var(--text2);line-height:1.7}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px}
+.t-item{padding:10px 16px;border-radius:var(--r8);font-size:12px;font-weight:600;animation:tIn .25s var(--ease);display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.t-ok{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.t-err{background:rgba(248,81,73,.15);color:var(--red);border:1px solid rgba(248,81,73,.3)}
+.t-info{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3)}
+@keyframes tIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+
+/* ── LOADER ── */
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">VINEV<span>.</span> Admin</div>
+    <div class="login-sub">Dashboard Pengelola</div>
+    <div class="login-field">
+      <label>Email</label>
+      <input id="login-email" type="email" placeholder="admin@vinev.id" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Masuk →</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">VINEV<span>.</span></div>
+      <div class="sub">Admin Panel</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="showTab('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Data</div>
+      <div class="nav-item" onclick="showTab('products')"><span class="nav-icon">🧴</span>Produk</div>
+      <div class="nav-item" onclick="showTab('orders')"><span class="nav-icon">📦</span>Orders</div>
+      <div class="nav-item" onclick="showTab('reviews')"><span class="nav-icon">⭐</span>Reviews</div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">⇠ Logout</button>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right" id="topbar-actions"></div>
+    </div>
+    <div class="page-body">
+
+      <!-- DASHBOARD -->
+      <div id="tab-dashboard" class="admin-page active">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">Total Produk</div><div class="kpi-val accent" id="kpi-products">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">Total Orders</div><div class="kpi-val blue" id="kpi-orders">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">Omzet</div><div class="kpi-val green" id="kpi-revenue">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">Review Pending</div><div class="kpi-val orange" id="kpi-reviews">—</div></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar"><h3>Orders Terbaru</h3></div>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>Order</th><th>Pembeli</th><th>Produk</th><th>Total</th><th>Status</th><th>Tanggal</th></tr></thead>
+            <tbody id="dash-orders-body"><tr><td colspan="6" style="text-align:center;padding:30px"><div class="spin"></div></td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div id="tab-products" class="admin-page">
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <h3>Produk</h3>
+            <input class="search-inp" placeholder="Cari produk…" oninput="filterTable('products-body',this.value,[0,1])">
+            <div class="ml-auto">
+              <button class="btn btn-primary" onclick="openProductModal()">+ Tambah Produk</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>ID</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Badge</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
+            <tbody id="products-body"><tr><td colspan="8" style="text-align:center;padding:30px"><div class="spin"></div></td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div id="tab-orders" class="admin-page">
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <h3>Orders</h3>
+            <input class="search-inp" placeholder="Cari nama/produk…" oninput="filterTable('orders-body',this.value,[1,2])">
+            <div class="ml-auto" style="display:flex;gap:6px">
+              <select id="order-status-filter" onchange="loadOrders()" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);color:var(--text);font-size:12px;outline:none">
+                <option value="">Semua Status</option>
+                <option value="pending">Pending</option>
+                <option value="diproses">Diproses</option>
+                <option value="dikirim">Dikirim</option>
+                <option value="selesai">Selesai</option>
+                <option value="dibatalkan">Dibatalkan</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>Kode</th><th>Pembeli</th><th>WA</th><th>Produk</th><th>Qty</th><th>Total</th><th>Status</th><th>Tanggal</th><th style="text-align:right">Aksi</th></tr></thead>
+            <tbody id="orders-body"><tr><td colspan="9" style="text-align:center;padding:30px"><div class="spin"></div></td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- REVIEWS -->
+      <div id="tab-reviews" class="admin-page">
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <h3>Reviews</h3>
+            <input class="search-inp" placeholder="Cari nama…" oninput="filterTable('reviews-body',this.value,[0,1])">
+            <div class="ml-auto" style="display:flex;gap:6px">
+              <select id="review-filter" onchange="loadReviews()" style="padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r8);color:var(--text);font-size:12px;outline:none">
+                <option value="">Semua</option>
+                <option value="false">Pending</option>
+                <option value="true">Disetujui</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>Nama</th><th>Produk</th><th>Rating</th><th>Komentar</th><th>Status</th><th>Tanggal</th><th style="text-align:right">Aksi</th></tr></thead>
+            <tbody id="reviews-body"><tr><td colspan="7" style="text-align:center;padding:30px"><div class="spin"></div></td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+    </div><!-- /page-body -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="product-modal-title">Tambah Produk</h3>
+      <button class="modal-close" onclick="closeModal('productModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>ID *</label><input id="pm-id" placeholder="PF011"></div>
+        <div class="form-group"><label>Nama *</label><input id="pm-nama" placeholder="Nama Parfum"></div>
+        <div class="form-group full"><label>Tagline</label><input id="pm-tagline" placeholder="Your darkness, bottled."></div>
+        <div class="form-group"><label>Kategori *</label>
+          <select id="pm-kategori"><option value="">Pilih…</option><option>Unisex</option><option>Feminin</option><option>Maskulin</option></select>
+        </div>
+        <div class="form-group"><label>Volume (ml)</label><input id="pm-volume" type="number" placeholder="50"></div>
+        <div class="form-group"><label>Harga (Rp) *</label><input id="pm-harga" type="number" placeholder="285000"></div>
+        <div class="form-group"><label>Stok</label><input id="pm-stok" type="number" placeholder="30"></div>
+        <div class="form-group full"><label>Top Notes</label><input id="pm-top" placeholder="Black Pepper, Bergamot"></div>
+        <div class="form-group full"><label>Heart Notes</label><input id="pm-heart" placeholder="Oud, Dark Rose"></div>
+        <div class="form-group full"><label>Base Notes</label><input id="pm-base" placeholder="Vetiver, Amber, Musk"></div>
+        <div class="form-group"><label>Badge</label>
+          <select id="pm-badge"><option value="">Tidak ada</option><option>Best Seller</option><option>New</option><option>Trending</option><option>Premium</option><option>Limited</option><option>Fan Fave</option><option>Bestseller</option></select>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select id="pm-status"><option value="aktif">Aktif</option><option value="nonaktif">Non-aktif</option></select>
+        </div>
+        <div class="form-group full"><label>Deskripsi</label><textarea id="pm-deskripsi" placeholder="Deskripsi produk…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('productModal')">Batal</button>
+      <button class="btn btn-primary" id="pm-save-btn" onclick="saveProduct()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER STATUS MODAL -->
+<div class="modal-overlay" id="orderStatusModal">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-header">
+      <h3>Update Status Order</h3>
+      <button class="modal-close" onclick="closeModal('orderStatusModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="os-status">
+          <option value="pending">Pending</option>
+          <option value="diproses">Diproses</option>
+          <option value="dikirim">Dikirim</option>
+          <option value="selesai">Selesai</option>
+          <option value="dibatalkan">Dibatalkan</option>
+        </select>
+      </div>
+      <input type="hidden" id="os-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('orderStatusModal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveOrderStatus()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <h3>Konfirmasi</h3>
+      <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-text" id="confirm-text">Yakin ingin menghapus data ini?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Batal</button>
+      <button class="btn btn-danger" id="confirm-ok">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIG — SAMA dengan index.html
+// ══════════════════════════════════════════════════════
+const SUPABASE_URL     = 'https://bseuiwkwqacflrzwjwwl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzZXVpd2t3cWFjZmxyendqd3dsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NzA2NjIsImV4cCI6MjA4OTQ0NjY2Mn0.0-CxEELEekVPR6hrY6QbpAjpzj5w2_Y2NfJMGehfwYc';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ══════════════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-password').value;
+  document.getElementById('login-err').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { document.getElementById('login-err').textContent = '❌ ' + error.message; return; }
+  showApp();
+}
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+async function checkAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) showApp();
+}
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  loadDashboard();
+}
+
+document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// ══════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════
+const TAB_META = {
+  dashboard:{ title:'Dashboard', action:'' },
+  products: { title:'Produk',    action:'' },
+  orders:   { title:'Orders',    action:'' },
+  reviews:  { title:'Reviews',   action:'' },
+};
+let currentTab = 'dashboard';
+
+function showTab(tab) {
+  document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(`'${tab}'`)) n.classList.add('active');
+  });
+  document.getElementById('topbar-title').textContent = TAB_META[tab]?.title || tab;
+  currentTab = tab;
+  if (tab === 'products') loadProducts();
+  if (tab === 'orders')   loadOrders();
+  if (tab === 'reviews')  loadReviews();
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+const fmt = n => 'Rp ' + new Intl.NumberFormat('id-ID').format(n || 0);
+const fmtDate = d => d ? new Date(d).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'2-digit' }) : '';
+
+function toast(msg, type = 'info') {
+  const icons = { ok:'✓', err:'✕', info:'ℹ' };
+  const el = document.createElement('div');
+  el.className = `t-item t-${type}`;
+  el.textContent = (icons[type] || '') + ' ' + msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.style.opacity = '0', 2600);
+  setTimeout(() => el.remove(), 2900);
+}
+
+function orderBadge(s) {
+  const m = { pending:'orange', diproses:'blue', dikirim:'accent', selesai:'green', dibatalkan:'red' };
+  return `<span class="badge badge-${m[s]||'blue'}">${s}</span>`;
+}
+
+function filterTable(tbodyId, q, cols) {
+  const q2 = q.toLowerCase();
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(r => {
+    const text = cols.map(c => r.cells[c]?.textContent || '').join(' ').toLowerCase();
+    r.style.display = text.includes(q2) ? '' : 'none';
+  });
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(o =>
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); })
+);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+});
+
+// ══════════════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════════════
+async function loadDashboard() {
+  const [{ count: cp }, { count: co }, { data: ordersData }, { count: cr }] = await Promise.all([
+    sb.from('products').select('*', { count:'exact', head:true }),
+    sb.from('orders').select('*', { count:'exact', head:true }),
+    sb.from('orders').select('total,status,order_code,nama_pembeli,produk_nama,created_at').order('created_at',{ascending:false}).limit(8),
+    sb.from('reviews').select('*', { count:'exact', head:true }).eq('tampilkan', false),
+  ]);
+
+  document.getElementById('kpi-products').textContent = cp || 0;
+  document.getElementById('kpi-orders').textContent   = co || 0;
+  document.getElementById('kpi-reviews').textContent  = cr || 0;
+
+  const revenue = (ordersData || []).filter(o => o.status === 'selesai').reduce((s, o) => s + (o.total || 0), 0);
+  document.getElementById('kpi-revenue').textContent = fmt(revenue);
+
+  document.getElementById('dash-orders-body').innerHTML = (ordersData || []).map(o => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px;color:var(--text3)">${o.order_code || ''}</td>
+      <td>${o.nama_pembeli || ''}</td>
+      <td>${o.produk_nama || ''}</td>
+      <td style="font-family:monospace">${fmt(o.total)}</td>
+      <td>${orderBadge(o.status)}</td>
+      <td style="color:var(--text3)">${fmtDate(o.created_at)}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">Belum ada order</td></tr>';
+}
+
+// ══════════════════════════════════════════════════════
+//  PRODUCTS
+// ══════════════════════════════════════════════════════
+async function loadProducts() {
+  const { data } = await sb.from('products').select('*').order('id');
+  document.getElementById('products-body').innerHTML = (data || []).map(p => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px;color:var(--text3)">${p.id}</td>
+      <td><strong>${p.nama}</strong></td>
+      <td>${p.kategori || ''}</td>
+      <td style="font-family:monospace">${fmt(p.harga)}</td>
+      <td style="color:${p.stok < 5 ? 'var(--red)' : 'var(--green)'}"><strong>${p.stok}</strong></td>
+      <td>${p.badge ? `<span class="badge badge-accent">${p.badge}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
+      <td><span class="badge badge-${p.status==='aktif'?'green':'red'}">${p.status}</span></td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="openProductModal('${p.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('products','id','${p.id}','${p.nama.replace(/'/g,"\\'")}')">Hapus</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text3)">Tidak ada data</td></tr>';
+}
+
+let editingProductId = null;
+async function openProductModal(id) {
+  editingProductId = id || null;
+  document.getElementById('product-modal-title').textContent = id ? 'Edit Produk' : 'Tambah Produk';
+  const fields = ['id','nama','tagline','kategori','volume','harga','stok','top','heart','base','badge','status','deskripsi'];
+  fields.forEach(f => { const el = document.getElementById('pm-' + f); if (el) el.value = ''; });
+  document.getElementById('pm-status').value = 'aktif';
+
+  if (id) {
+    const { data } = await sb.from('products').select('*').eq('id', id).single();
+    if (data) {
+      document.getElementById('pm-id').value       = data.id;
+      document.getElementById('pm-nama').value     = data.nama || '';
+      document.getElementById('pm-tagline').value  = data.tagline || '';
+      document.getElementById('pm-kategori').value = data.kategori || '';
+      document.getElementById('pm-volume').value   = data.volume_ml || '';
+      document.getElementById('pm-harga').value    = data.harga || '';
+      document.getElementById('pm-stok').value     = data.stok || '';
+      document.getElementById('pm-top').value      = data.top_notes || '';
+      document.getElementById('pm-heart').value    = data.heart_notes || '';
+      document.getElementById('pm-base').value     = data.base_notes || '';
+      document.getElementById('pm-badge').value    = data.badge || '';
+      document.getElementById('pm-status').value   = data.status || 'aktif';
+      document.getElementById('pm-deskripsi').value= data.deskripsi || '';
+    }
+    document.getElementById('pm-id').disabled = true;
+  } else {
+    document.getElementById('pm-id').disabled = false;
+  }
+  document.getElementById('productModal').classList.add('show');
+}
+
+async function saveProduct() {
+  const payload = {
+    nama:        document.getElementById('pm-nama').value.trim(),
+    tagline:     document.getElementById('pm-tagline').value.trim(),
+    kategori:    document.getElementById('pm-kategori').value,
+    volume_ml:   parseInt(document.getElementById('pm-volume').value) || 30,
+    harga:       parseInt(document.getElementById('pm-harga').value) || 0,
+    stok:        parseInt(document.getElementById('pm-stok').value) || 0,
+    top_notes:   document.getElementById('pm-top').value.trim(),
+    heart_notes: document.getElementById('pm-heart').value.trim(),
+    base_notes:  document.getElementById('pm-base').value.trim(),
+    badge:       document.getElementById('pm-badge').value,
+    status:      document.getElementById('pm-status').value,
+    deskripsi:   document.getElementById('pm-deskripsi').value.trim(),
+  };
+  if (!payload.nama || !payload.kategori || !payload.harga) { toast('Lengkapi field wajib', 'err'); return; }
+
+  const btn = document.getElementById('pm-save-btn');
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+
+  let error;
+  if (editingProductId) {
+    ({ error } = await sb.from('products').update(payload).eq('id', editingProductId));
+  } else {
+    const id = document.getElementById('pm-id').value.trim();
+    if (!id) { toast('ID wajib diisi', 'err'); btn.disabled=false; btn.textContent='Simpan'; return; }
+    ({ error } = await sb.from('products').insert({ id, ...payload }));
+  }
+
+  btn.disabled = false; btn.textContent = 'Simpan';
+  if (error) { toast('Gagal: ' + error.message, 'err'); return; }
+  toast(editingProductId ? 'Produk diperbarui' : 'Produk ditambahkan', 'ok');
+  closeModal('productModal');
+  loadProducts();
+}
+
+// ══════════════════════════════════════════════════════
+//  ORDERS
+// ══════════════════════════════════════════════════════
+async function loadOrders() {
+  const statusFilter = document.getElementById('order-status-filter').value;
+  let q = sb.from('orders').select('*').order('created_at', { ascending: false });
+  if (statusFilter) q = q.eq('status', statusFilter);
+  const { data } = await q;
+
+  document.getElementById('orders-body').innerHTML = (data || []).map(o => `
+    <tr>
+      <td style="font-family:monospace;font-size:11px;color:var(--text3)">${o.order_code || ''}</td>
+      <td>${o.nama_pembeli || ''}</td>
+      <td style="color:var(--text3)">${o.whatsapp || ''}</td>
+      <td>${o.produk_nama || ''}</td>
+      <td>${o.qty || 1}</td>
+      <td style="font-family:monospace">${fmt(o.total)}</td>
+      <td>${orderBadge(o.status)}</td>
+      <td style="color:var(--text3)">${fmtDate(o.created_at)}</td>
+      <td class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="openOrderStatus(${o.id},'${o.status}')">Status</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('orders','id',${o.id},'${(o.order_code||'').replace(/'/g,"\\'")}')">Hapus</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)">Tidak ada order</td></tr>';
+}
+
+function openOrderStatus(id, status) {
+  document.getElementById('os-id').value = id;
+  document.getElementById('os-status').value = status;
+  document.getElementById('orderStatusModal').classList.add('show');
+}
+async function saveOrderStatus() {
+  const id     = document.getElementById('os-id').value;
+  const status = document.getElementById('os-status').value;
+  const { error } = await sb.from('orders').update({ status }).eq('id', id);
+  if (error) { toast('Gagal: ' + error.message, 'err'); return; }
+  toast('Status diperbarui', 'ok');
+  closeModal('orderStatusModal');
+  loadOrders();
+}
+
+// ══════════════════════════════════════════════════════
+//  REVIEWS
+// ══════════════════════════════════════════════════════
+async function loadReviews() {
+  const f = document.getElementById('review-filter').value;
+  let q = sb.from('reviews').select('*').order('created_at', { ascending: false });
+  if (f !== '') q = q.eq('tampilkan', f === 'true');
+  const { data } = await q;
+
+  document.getElementById('reviews-body').innerHTML = (data || []).map(r => `
+    <tr>
+      <td>${r.nama || ''}</td>
+      <td>${r.produk_nama || ''}</td>
+      <td style="color:var(--accent)">${'★'.repeat(r.rating || 5)}</td>
+      <td style="color:var(--text2);font-style:italic;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.komentar || ''}</td>
+      <td><span class="badge badge-${r.tampilkan ? 'green' : 'orange'}">${r.tampilkan ? 'Tampil' : 'Pending'}</span></td>
+      <td style="color:var(--text3)">${fmtDate(r.created_at)}</td>
+      <td class="actions">
+        ${!r.tampilkan ? `<button class="btn btn-success btn-sm" onclick="approveReview(${r.id})">Setujui</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('reviews','id',${r.id},'${(r.nama||'').replace(/'/g,"\\'")}')">Hapus</button>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Tidak ada review</td></tr>';
+}
+
+async function approveReview(id) {
+  const { error } = await sb.from('reviews').update({ tampilkan: true }).eq('id', id);
+  if (error) { toast('Gagal: ' + error.message, 'err'); return; }
+  toast('Review disetujui ✓', 'ok');
+  loadReviews();
+  // Refresh KPI
+  const { count } = await sb.from('reviews').select('*', { count:'exact', head:true }).eq('tampilkan', false);
+  document.getElementById('kpi-reviews').textContent = count || 0;
+}
+
+// ══════════════════════════════════════════════════════
+//  CONFIRM DELETE
+// ══════════════════════════════════════════════════════
+function confirmDelete(table, col, val, name) {
+  document.getElementById('confirm-text').textContent = `Hapus "${name}"? Tindakan ini tidak dapat dibatalkan.`;
+  document.getElementById('confirm-ok').onclick = async () => {
+    const { error } = await sb.from(table).delete().eq(col, val);
+    if (error) { toast('Gagal: ' + error.message, 'err'); return; }
+    toast('Dihapus ✓', 'ok');
+    closeModal('confirmModal');
+    if (currentTab === 'products') loadProducts();
+    if (currentTab === 'orders')   loadOrders();
+    if (currentTab === 'reviews')  loadReviews();
+  };
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+checkAuth();
+</script>
+</body>
+</html>
